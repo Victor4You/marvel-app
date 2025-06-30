@@ -1,0 +1,5 @@
+[build]
+  # Comando para construir tu app
+  command = "npm run build"
+  # Carpeta que Netlify debe publicar (la salida de Vite)
+  publish = "dist"
