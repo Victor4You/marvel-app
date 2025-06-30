@@ -1,5 +1,7 @@
+# netlify.toml (en /ruta/a/marvel-app/netlify.toml)
+
 [build]
-  # Comando para construir tu app
+  # El comando que construye tu app
   command = "npm run build"
-  # Carpeta que Netlify debe publicar (la salida de Vite)
+  # La carpeta que Vite genera tras el build
   publish = "dist"
