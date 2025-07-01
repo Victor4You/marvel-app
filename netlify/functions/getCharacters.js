@@ -1,22 +1,26 @@
 // netlify/functions/getCharacters.js
 
-import crypto from 'crypto'
-import fetch from 'node-fetch'
+const crypto = require('crypto')
 
-export async function handler(event) {
-  // 1. Extrae limit y offset de la query
+// handler en CommonJS
+exports.handler = async function(event, context) {
   const { limit = '20', offset = '0' } = event.queryStringParameters || {}
 
-  // 2. Genera ts y hash MD5 de ts + PRIVATE + PUBLIC
-  const ts = Date.now().toString()
-  const pub = process.env.MARVEL_PUBLIC_KEY
+  const ts   = Date.now().toString()
+  const pub  = process.env.MARVEL_PUBLIC_KEY
   const priv = process.env.MARVEL_PRIVATE_KEY
+
+  // debug de bordes invisibles
+  console.log(`PUB [${pub}] (len=${pub?.length})`)
+  console.log(`PRIV[${priv}] (len=${priv?.length})`)
+
   const hash = crypto
     .createHash('md5')
     .update(ts + priv + pub)
     .digest('hex')
 
-  // 3. Construye la URL con todos los params
+  console.log('hash →', hash)
+
   const url = `https://gateway.marvel.com/v1/public/characters` +
     `?ts=${ts}` +
     `&apikey=${pub}` +
@@ -24,21 +28,28 @@ export async function handler(event) {
     `&limit=${limit}` +
     `&offset=${offset}`
 
-  // 4. Llama a Marvel y parsea JSON
-  const apiRes = await fetch(url)
-  const json  = await apiRes.json()
+  try {
+    // fetch global de Node 18+
+    const apiRes = await fetch(url)
+    const json   = await apiRes.json()
 
-  if (!apiRes.ok) {
-    return {
-      statusCode: apiRes.status,
-      body: JSON.stringify(json)
+    if (!apiRes.ok) {
+      return {
+        statusCode: apiRes.status,
+        body: JSON.stringify(json),
+      }
     }
-  }
 
-  // 5. Devuelve sólo los resultados
-  return {
-    statusCode: 200,
-    body: JSON.stringify(json.data.results),
-    headers: { 'Access-Control-Allow-Origin': '*' }
+    return {
+      statusCode: 200,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify(json.data.results),
+    }
+  } catch (err) {
+    console.error('Fetch error:', err)
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: err.message }),
+    }
   }
 }
