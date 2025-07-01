@@ -1,38 +1,44 @@
-import axios from 'axios'
-import md5   from 'blueimp-md5'
+// netlify/functions/getCharacters.js
+
+import crypto from 'crypto'
+import fetch from 'node-fetch'
 
 export async function handler(event) {
-    console.log('▷ PUB_KEY:', process.env.MARVEL_PUBLIC_KEY);
-    console.log('▷ PRIV_KEY:', process.env.MARVEL_PRIVATE_KEY);
-    if (!process.env.MARVEL_PUBLIC_KEY || !process.env.MARVEL_PRIVATE_KEY) {
+  // 1. Extrae limit y offset de la query
+  const { limit = '20', offset = '0' } = event.queryStringParameters || {}
+
+  // 2. Genera ts y hash MD5 de ts + PRIVATE + PUBLIC
+  const ts = Date.now().toString()
+  const pub = process.env.MARVEL_PUBLIC_KEY
+  const priv = process.env.MARVEL_PRIVATE_KEY
+  const hash = crypto
+    .createHash('md5')
+    .update(ts + priv + pub)
+    .digest('hex')
+
+  // 3. Construye la URL con todos los params
+  const url = `https://gateway.marvel.com/v1/public/characters` +
+    `?ts=${ts}` +
+    `&apikey=${pub}` +
+    `&hash=${hash}` +
+    `&limit=${limit}` +
+    `&offset=${offset}`
+
+  // 4. Llama a Marvel y parsea JSON
+  const apiRes = await fetch(url)
+  const json  = await apiRes.json()
+
+  if (!apiRes.ok) {
     return {
-      statusCode: 500,
-      body: JSON.stringify({ message: 'API keys missing in environment' })
-    };
+      statusCode: apiRes.status,
+      body: JSON.stringify(json)
+    }
   }
-  try {
-    const { limit = 20, offset = 0 } = event.queryStringParameters || {}
-    const ts   = Date.now().toString()
-    const PUB  = process.env.MARVEL_PUBLIC_KEY
-    const PRIV = process.env.MARVEL_PRIVATE_KEY
-    if (!PUB || !PRIV) throw new Error('Missing API keys')
-        
 
-    const hash = md5(ts + PRIV + PUB)
-    const { data } = await axios.get(
-      'https://gateway.marvel.com/v1/public/characters',
-      { params: { ts, apikey: PUB, hash, limit, offset } }
-    )
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify(data.data)
-    }
-  } catch (err) {
-    console.error('Function error:', err)
-    return {
-      statusCode: err.response?.status || 500,
-      body: JSON.stringify({ message: err.message })
-    }
+  // 5. Devuelve sólo los resultados
+  return {
+    statusCode: 200,
+    body: JSON.stringify(json.data.results),
+    headers: { 'Access-Control-Allow-Origin': '*' }
   }
 }
