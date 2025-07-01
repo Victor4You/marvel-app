@@ -2,7 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-  // no definir root aquí → Vite usará la carpeta actual (donde está vite.config.js)
+  // ❌ Si tuvieras algo como root: 'frontend' bórralo o coméntalo
+  // root: 'frontend',
+
   plugins: [react()],
   server: {
     proxy: {

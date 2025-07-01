@@ -1,7 +1,8 @@
-# netlify.toml (en /ruta/a/marvel-app/netlify.toml)
-
 [build]
-  # El comando que construye tu app
-  command = "npm run build"
-  # La carpeta que Vite genera tras el build
+  # 1) El comando que Netlify debe ejecutar para generar tu sitio.
+  #    Primero instala dependencias, luego llama al script de build de Vite.
+  command = "npm install && npm run build"
+
+  # 2) La carpeta que Vite habrá creado al terminar el build.
+  #    Todo lo que esté dentro de esta carpeta se sirve como página web.
   publish = "dist"
