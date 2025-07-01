@@ -1,14 +1,9 @@
+// src/api/marvel.js
 import axios from 'axios'
+const api = axios.create({ baseURL: '/.netlify/functions' })
 
-// Apunta al proxy configurado en Vite
-const api = axios.create({ baseURL: '/api' })
-
-export async function getCharacters(limit = 20, offset = 0) {
-  const response = await api.get('/characters', { params: { limit, offset } })
-  return response.data.results
-}
-
-export async function getCharacterById(id) {
-  const response = await api.get(`/characters/${id}`)
-  return response.data
+export function getCharacters(limit, offset) {
+  return api
+    .get('/getCharacters', { params: { limit, offset } })
+    .then(res => res.data.results)
 }
